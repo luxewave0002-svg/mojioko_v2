@@ -24,8 +24,12 @@ module.exports = async function handler(req, res) {
       method: req.method,
       headers: {
         Authorization: auth,
-        Accept: 'application/json',
+        Accept: 'application/json, text/plain, */*',
         'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Origin': 'https://app.plaud.ai',
+        'Referer': 'https://app.plaud.ai/',
+        'Accept-Language': 'ja,en;q=0.9',
       },
       redirect: 'follow',
     });
