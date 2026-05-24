@@ -1156,12 +1156,16 @@ function updatePlaudDot() {
 }
 
 async function plaudFetch(path) {
-  const res = await fetch(plaudApiBase + path, {
-    headers: { 'Authorization': `Bearer ${plaudToken}` }
+  // Vercel proxy経由でCORSを回避
+  const res = await fetch(`/api/plaud-proxy?path=${encodeURIComponent(path)}`, {
+    headers: {
+      'Authorization': `Bearer ${plaudToken}`,
+      'X-Plaud-Base': plaudApiBase
+    }
   });
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
-    try { const j = await res.json(); msg = j.message || j.msg || msg; } catch(e) {}
+    try { const j = await res.json(); msg = j.error || j.message || j.msg || msg; } catch(e) {}
     throw new Error(msg);
   }
   return res.json();
@@ -1184,46 +1188,21 @@ async function loginPlaud() {
   status.textContent = '>> AUTHENTICATING...';
   status.className = 'plaud-status loading';
 
-  const regionSel = document.getElementById('plaudRegion').value;
-  const tryList = regionSel === 'auto'
-    ? ['apne1', 'us', 'eu']
-    : [regionSel];
-
-  let success = false;
-  for (const r of tryList) {
-    const base = PLAUD_BASE[r];
-    try {
-      crtLog(`>> TRYING REGION: ${r.toUpperCase()}...`, '');
-      const res = await fetch(`${base}/auth/access-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ username: email, password })
-      });
-      if (!res.ok) continue;
-      const data = await res.json();
-      const token = data.access_token || data.data?.access_token;
-      if (!token) continue;
-      plaudToken = token;
-      plaudApiBase = base;
-      // Try to get actual workspace domain
-      try {
-        const wsRes = await fetch(`${base}/user/workspace/list`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).then(r2 => r2.json());
-        const ws = wsRes.data?.list?.[0] || wsRes.data?.[0];
-        if (ws?.domain) { plaudApiBase = ws.domain; }
-        if (ws?.workspaceToken) { plaudToken = ws.workspaceToken; }
-      } catch(e) { /* use base token */ }
-      success = true;
-      break;
-    } catch(e) {
-      crtLog(`>> ${r.toUpperCase()} FAILED: ${e.message}`, 'err');
-    }
-  }
-
-  if (!success) {
-    status.textContent = 'ERR: LOGIN FAILED — CHECK EMAIL / PASSWORD';
+  crtLog('>> AUTHENTICATING VIA PROXY...', '');
+  try {
+    const res = await fetch('/api/plaud-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    plaudToken = data.token;
+    plaudApiBase = data.apiBase || 'https://api-apne1.plaud.ai';
+  } catch(e) {
+    status.textContent = `ERR: ${e.message}`;
     status.className = 'plaud-status err';
+    crtLog(`>> LOGIN ERR: ${e.message}`, 'err');
     btn.disabled = false;
     btn.textContent = '▶ LOGIN';
     return;
