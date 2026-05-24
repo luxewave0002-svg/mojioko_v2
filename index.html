@@ -944,7 +944,7 @@ h1 .accent { color: var(--amber); }
       </div>
       <div class="api-row">
         <span class="api-tag">API_KEY</span>
-        <input class="api-input" type="password" id="apiKey" placeholder="sk-proj-..." oninput="updateApiDot()">
+        <input class="api-input" type="password" id="apiKey" placeholder="sk-proj-..." oninput="updateApiDot(); saveApiKey()">
         <div class="api-dot" id="apiDot"></div>
       </div>
 
@@ -1456,6 +1456,7 @@ async function loadForWhisper(fileId, fileName) {
 // 起動時処理
 initBookmarklet();
 initFromHash();
+loadApiKey();
 
 // Drag & Drop
 const dz = document.getElementById('dropZone');
@@ -1488,6 +1489,20 @@ function clearFile() {
   document.getElementById('fileLoaded').classList.remove('visible');
   document.getElementById('mFileSize').textContent = '—';
   crtLog('FILE BUFFER CLEARED', 'warn');
+}
+
+function saveApiKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  if (k) localStorage.setItem('mojioko_apikey', k);
+  else localStorage.removeItem('mojioko_apikey');
+}
+
+function loadApiKey() {
+  const k = localStorage.getItem('mojioko_apikey');
+  if (k) {
+    document.getElementById('apiKey').value = k;
+    updateApiDot();
+  }
 }
 
 function updateApiDot() {
