@@ -1318,6 +1318,10 @@ async function loginPlaud() {
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     plaudToken = data.token;
     plaudApiBase = data.apiBase || 'https://api-apne1.plaud.ai';
+    // TOKENタブに表示＆localStorageに保存
+    document.getElementById('plaudTokenInput').value = data.token;
+    localStorage.setItem('mojioko_plaud_token', data.token);
+    localStorage.setItem('mojioko_plaud_domain', plaudApiBase);
   } catch(e) {
     status.textContent = `ERR: ${e.message}`;
     status.className = 'plaud-status err';
