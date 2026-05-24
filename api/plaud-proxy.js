@@ -22,9 +22,42 @@ module.exports = async function handler(req, res) {
   try {
     const plaudRes = await fetch(base + path, {
       method: req.method,
-      headers: { Authorization: auth },
+      headers: {
+        Authorization: auth,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      redirect: 'follow',
     });
+
+    // レスポンスがJSONかチェック
+    const contentType = plaudRes.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await plaudRes.text();
+      return res.status(502).json({
+        error: 'NON_JSON_RESPONSE',
+        status: plaudRes.status,
+        contentType,
+        preview: text.slice(0, 200),
+      });
+    }
+
     const data = await plaudRes.json();
+
+    // PLAUDのリージョンミスマッチ対応 (status: -302)
+    if (data.status === -302 && data.redirect_url) {
+      const retryRes = await fetch(data.redirect_url + path, {
+        method: req.method,
+        headers: {
+          Authorization: auth,
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      const retryData = await retryRes.json();
+      return res.status(retryRes.status).json(retryData);
+    }
+
     return res.status(plaudRes.status).json(data);
   } catch (e) {
     return res.status(502).json({ error: 'PROXY_ERROR', detail: e.message });
