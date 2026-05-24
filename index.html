@@ -963,10 +963,6 @@ h1 .accent { color: var(--amber); }
 
       <!-- Login form -->
       <div class="plaud-form" id="plaudLoginForm">
-        <button class="google-login-btn" onclick="switchPlaudTab('bookmark')">
-          <span class="google-icon">G</span> Googleアカウントでログイン
-        </button>
-        <div class="login-divider"><span>またはメールで</span></div>
         <div class="plaud-input-row">
           <div class="api-row">
             <span class="api-tag">EMAIL</span>
@@ -981,14 +977,16 @@ h1 .accent { color: var(--amber); }
           </div>
         </div>
         <div class="plaud-controls">
-          <select class="param-select" id="plaudRegion" style="min-width:auto; font-size:10px; padding:4px 8px;">
-            <option value="auto" selected>REGION: AUTO</option>
-            <option value="us">REGION: US</option>
-            <option value="eu">REGION: EU</option>
-            <option value="apne1">REGION: JP</option>
-          </select>
           <button class="plaud-connect-btn" id="plaudLoginBtn" onclick="loginPlaud()">▶ LOGIN</button>
         </div>
+        <div id="plaudTokenResult" style="display:none; margin-top:8px;">
+          <div class="api-row" style="gap:4px;">
+            <span class="api-tag" style="color:var(--green);font-size:9px;">TOKEN</span>
+            <input class="api-input" type="text" id="plaudTokenDisplay" readonly style="font-size:10px; color:var(--green); background:rgba(76,175,80,0.05);">
+            <button onclick="copyPlaudToken()" id="copyTokenBtn" style="background:rgba(76,175,80,0.15);border:1px solid var(--green);color:var(--green);cursor:pointer;font-size:10px;padding:4px 8px;border-radius:2px;white-space:nowrap;">COPY</button>
+          </div>
+        </div>
+        <div style="margin-top:8px; font-size:10px; color:var(--text-dim); text-align:center;">// Googleアカウントは 🔖 AUTO タブを使用</div>
       </div>
 
       <!-- Token form (advanced) -->
@@ -1250,6 +1248,16 @@ function togglePlaudToken() {
   }
 }
 
+function copyPlaudToken() {
+  const t = document.getElementById('plaudTokenDisplay').value;
+  if (!t) return;
+  navigator.clipboard.writeText(t).then(() => {
+    const btn = document.getElementById('copyTokenBtn');
+    btn.textContent = '✓ COPIED';
+    setTimeout(() => { btn.textContent = 'COPY'; }, 2000);
+  });
+}
+
 function savePlaudToken() {
   const t = document.getElementById('plaudTokenInput').value.trim();
   if (t) localStorage.setItem('mojioko_plaud_token', t);
@@ -1318,15 +1326,14 @@ async function loginPlaud() {
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     plaudToken = data.token;
     plaudApiBase = data.apiBase || 'https://api-apne1.plaud.ai';
-    // TOKENタブに表示＆localStorageに保存
-    document.getElementById('plaudTokenInput').value = data.token;
+    // localStorageに保存
     localStorage.setItem('mojioko_plaud_token', data.token);
     localStorage.setItem('mojioko_plaud_domain', plaudApiBase);
-    // TOKENタブに切り替えて👁で表示
-    switchPlaudTab('token');
-    const ti = document.getElementById('plaudTokenInput');
-    ti.type = 'text';
-    document.getElementById('plaudTokenToggle').style.opacity = '1';
+    // TOKEN表示エリアを表示（PLAUD LOGINタブのまま）
+    document.getElementById('plaudTokenDisplay').value = data.token;
+    document.getElementById('plaudTokenResult').style.display = 'block';
+    // TOKEN隠しフォームにも入れてdotを更新
+    document.getElementById('plaudTokenInput').value = data.token;
     updatePlaudDot();
   } catch(e) {
     status.textContent = `ERR: ${e.message}`;
