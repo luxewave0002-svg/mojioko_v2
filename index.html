@@ -1012,12 +1012,12 @@ h1 .accent { color: var(--amber); }
       <div class="plaud-form hidden" id="plaudBookmarkForm">
         <div class="bookmarklet-area">
           <div class="bookmarklet-step" style="color:var(--amber);margin-bottom:10px;">// Googleアカウントはこちらから連携</div>
-          <div class="bookmarklet-step"><span class="step-num">01</span>下のボタンをブラウザの<br>　　ブックマークバーにドラッグ</div>
+          <div class="bookmarklet-step"><span class="step-num">01</span>下のボタンをブックマークバーに<br>　　ドラッグして保存</div>
           <a class="bookmarklet-link" id="bookmarkletLink" href="#" title="ブックマークバーにドラッグしてください">
             📡 GET PLAUD TOKEN
           </a>
-          <div class="bookmarklet-step"><span class="step-num">02</span>app.plaud.ai を開く</div>
-          <div class="bookmarklet-step"><span class="step-num">03</span>そのブックマークをクリック<br>　　→ ここに自動で戻ります！</div>
+          <div class="bookmarklet-step"><span class="step-num">02</span>保存したブックマークをクリック<br>　　→ app.plaud.ai が自動で開く</div>
+          <div class="bookmarklet-step"><span class="step-num">03</span>app.plaud.ai で<br>　　もう一度ブックマークをクリック<br>　　→ ここに自動で戻ります！</div>
           <div class="bookmarklet-note">// スマホの場合はブックマークのURLを<br>JavaScriptコードに書き換えてください</div>
         </div>
       </div>
@@ -1187,7 +1187,7 @@ function switchPlaudTab(tab) {
 function initBookmarklet() {
   // ブックマークレットのhrefを動的に生成（現在のページURLに戻る）
   const returnUrl = window.location.origin + window.location.pathname;
-  const js = `javascript:(function(){try{var k=Object.keys(localStorage).find(function(k){return k.includes('workspaceList')});var ws=JSON.parse(localStorage[k]||'[]')[0];if(ws&&ws.workspaceToken){window.open('${returnUrl}#plaud='+encodeURIComponent(ws.workspaceToken)+'&dom='+encodeURIComponent(ws.domain||''),'_blank');}else{alert('PLAUDにログインしてください');}}catch(e){alert('Error: '+e);}})();`;
+  const js = `javascript:(function(){if(!location.href.includes('plaud.ai')){window.open('https://app.plaud.ai','_blank');alert('✅ app.plaud.ai が開きました\\nそのタブでこのブックマークをもう一度クリックしてください');return;}try{var k=Object.keys(localStorage).find(function(k){return k.includes('workspaceList')});var ws=JSON.parse(localStorage[k]||'[]')[0];if(ws&&ws.workspaceToken){window.open('${returnUrl}#plaud='+encodeURIComponent(ws.workspaceToken)+'&dom='+encodeURIComponent(ws.domain||''),'_blank');}else{alert('PLAUDにログインしてください');}}catch(e){alert('Error: '+e);}})();`;
   document.getElementById('bookmarkletLink').href = js;
 }
 
