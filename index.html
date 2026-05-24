@@ -1188,7 +1188,7 @@ function switchPlaudTab(tab) {
 function initBookmarklet() {
   // ブックマークレットのhrefを動的に生成（現在のページURLに戻る）
   const returnUrl = window.location.origin + window.location.pathname;
-  const js = `javascript:(function(){if(!location.href.includes('plaud.ai')){window.open('https://app.plaud.ai','_blank');alert('✅ app.plaud.ai が開きました\\nそのタブでこのブックマークをもう一度クリックしてください');return;}try{var k=Object.keys(localStorage).find(function(k){return k.includes('workspaceList')});var ws=JSON.parse(localStorage[k]||'[]')[0];if(ws&&ws.workspaceToken){window.open('${returnUrl}#plaud='+encodeURIComponent(ws.workspaceToken)+'&dom='+encodeURIComponent(ws.domain||''),'_blank');}else{alert('PLAUDにログインしてください');}}catch(e){alert('Error: '+e);}})();`;
+  const js = `javascript:(function(){if(!location.href.includes('plaud.ai')){window.open('https://app.plaud.ai','_blank');return;}try{var k=Object.keys(localStorage).find(function(k){return k.includes('workspaceList')});var ws=JSON.parse(localStorage[k]||'[]')[0];if(ws&&ws.workspaceToken){window.open('${returnUrl}#plaud='+encodeURIComponent(ws.workspaceToken)+'&dom='+encodeURIComponent(ws.domain||''),'_self');}else{alert('PLAUDにログインしてから再度クリックしてください');}}catch(e){alert('Error: '+e);}})();`;
   document.getElementById('bookmarkletLink').href = js;
 }
 
