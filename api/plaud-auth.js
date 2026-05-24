@@ -1,7 +1,6 @@
-// PLAUD ログインプロキシ
-// CORS問題を回避してサーバー側からPLAUD認証を行う
+// PLAUD ログインプロキシ - CORS回避のためサーバー側で認証
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -15,9 +14,9 @@ export default async function handler(req, res) {
   }
 
   const BASES = [
-    'https://api-apne1.plaud.ai', // Japan (AP Northeast)
-    'https://api.plaud.ai',        // US
-    'https://api-euc1.plaud.ai',   // EU
+    'https://api-apne1.plaud.ai',
+    'https://api.plaud.ai',
+    'https://api-euc1.plaud.ai',
   ];
 
   for (const base of BASES) {
@@ -25,32 +24,29 @@ export default async function handler(req, res) {
       const authRes = await fetch(`${base}/auth/access-token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ username: email, password }),
+        body: new URLSearchParams({ username: email, password }).toString(),
       });
 
       if (!authRes.ok) continue;
 
       const data = await authRes.json();
-      const token = data.access_token || data.data?.access_token;
+      const token = data.access_token || (data.data && data.data.access_token);
       if (!token) continue;
 
-      // ワークスペーストークンとドメインを取得
       let apiBase = base;
       let finalToken = token;
 
       try {
         const wsRes = await fetch(`${base}/user/workspace/list`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: 'Bearer ' + token },
         });
         if (wsRes.ok) {
           const wsData = await wsRes.json();
-          const ws = wsData.data?.list?.[0] || wsData.data?.[0];
-          if (ws?.domain) apiBase = ws.domain;
-          if (ws?.workspaceToken) finalToken = ws.workspaceToken;
+          const ws = (wsData.data && wsData.data.list && wsData.data.list[0]) || (wsData.data && wsData.data[0]);
+          if (ws && ws.domain) apiBase = ws.domain;
+          if (ws && ws.workspaceToken) finalToken = ws.workspaceToken;
         }
-      } catch (_) {
-        // workspaceトークン取得失敗時はuserトークンで続行
-      }
+      } catch (_) {}
 
       return res.status(200).json({ token: finalToken, apiBase });
     } catch (_) {
@@ -59,4 +55,4 @@ export default async function handler(req, res) {
   }
 
   return res.status(401).json({ error: 'AUTH_FAILED' });
-}
+};
